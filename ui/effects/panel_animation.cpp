@@ -286,6 +286,10 @@ void PanelAnimation::setSkipShadow(bool skipShadow) {
 	_skipShadow = skipShadow;
 }
 
+void PanelAnimation::setTransparentContent(bool transparent) {
+	_transparentContent = transparent;
+}
+
 void PanelAnimation::setWidthDuration() {
 	_widthDuration = _st.widthDuration;
 	Assert(_widthDuration >= 0.);
@@ -389,7 +393,7 @@ auto PanelAnimation::paintFrame(
 	fadeTop += frameTop;
 	fadeBottom += frameTop;
 
-	if (opacity < 1.) {
+	if (opacity < 1. || _transparentContent) {
 		_frame.fill(Qt::transparent);
 	}
 	{
@@ -399,7 +403,7 @@ auto PanelAnimation::paintFrame(
 		auto painterFrameTop = frameTop / pixelRatio;
 		auto painterFadeBottom = fadeBottom / pixelRatio;
 		p.drawPixmap(painterFrameLeft, painterFrameTop, _finalImage, frameLeft, frameTop, frameWidth, frameHeight);
-		if (_fadeHeight) {
+		if (_fadeHeight && !_transparentContent) {
 			if (frameTop != fadeTop) {
 				p.fillRect(painterFrameLeft, painterFrameTop, frameWidth, fadeTop - frameTop, _fadeFirst);
 			}

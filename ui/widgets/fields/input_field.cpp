@@ -32,6 +32,7 @@
 #include <QtCore/QMimeData>
 #include <QtCore/QRegularExpression>
 #include <QtGui/QClipboard>
+#include <QtGui/QPainterPath>
 #include <QtGui/QTextBlock>
 #include <QtGui/QTextDocumentFragment>
 #include <QtGui/QPixmapCache>
@@ -45,6 +46,13 @@
 
 namespace Ui {
 namespace {
+
+constexpr auto kGlassSurfaceOpacity = 0.5;
+
+[[nodiscard]] QColor GlassSurfaceColor(QColor color) {
+	color.setAlphaF(color.alphaF() * kGlassSurfaceOpacity);
+	return color;
+}
 
 constexpr auto kInstantReplaceRandomId = QTextFormat::UserProperty;
 constexpr auto kInstantReplaceWhatId = QTextFormat::UserProperty + 1;
@@ -2868,6 +2876,32 @@ void InputField::paintRoundSurrounding(
 	const auto divide = _st.borderDenominator ? _st.borderDenominator : 1;
 	const auto border = _st.border / float64(divide);
 	const auto borderHalf = border / 2.;
+	if (Platform::HasNativeGlass(this)) {
+		// Translucent fill and border must not overlap, or the ring
+		// shows up darker than the surface over the glass backdrop.
+		PainterHighQualityEnabler hq(p);
+		const auto full = QRectF(0, 0, width(), height());
+		const auto bg = GlassSurfaceColor(anim::color(
+			_st.textBg,
+			_st.textBgActive,
+			focusedDegree));
+		const auto fg = GlassSurfaceColor(anim::color(
+			_st.borderFg,
+			_st.borderFgActive,
+			focusedDegree));
+		const auto radius = float64(_st.borderRadius);
+		auto outer = QPainterPath();
+		outer.addRoundedRect(full, radius, radius);
+		auto inner = QPainterPath();
+		inner.addRoundedRect(
+			full.marginsRemoved({ border, border, border, border }),
+			std::max(radius - border, 0.),
+			std::max(radius - border, 0.));
+		p.setPen(Qt::NoPen);
+		p.fillPath(inner, bg);
+		p.fillPath(outer.subtracted(inner), fg);
+		return;
+	}
 	auto pen = anim::pen(_st.borderFg, _st.borderFgActive, focusedDegree);
 	pen.setWidthF(border);
 	p.setPen(pen);

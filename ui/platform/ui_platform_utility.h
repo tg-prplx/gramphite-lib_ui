@@ -18,6 +18,7 @@ class QPoint;
 class QPainter;
 class QPaintEvent;
 class QWidget;
+class QColor;
 
 namespace Ui {
 class PopupMenu;
@@ -67,6 +68,24 @@ void SetWindowMargins(not_null<QWidget*> widget, const QMargins &margins);
 void ShowWindowMenu(not_null<QWidget*> widget, const QPoint &point);
 
 void FixPopupMenuNativeEmojiPopup(not_null<PopupMenu*> menu);
+
+#ifdef Q_OS_MAC
+[[nodiscard]] bool NativeGlassSupported();
+[[nodiscard]] bool HasNativeGlass(const QWidget *widget);
+void InitNativeGlassWithinWindow(not_null<QWidget*> widget);
+void SetNativeGlass(
+	not_null<QWidget*> widget,
+	QRect rect,
+	int radius,
+	const QColor &background);
+void SetNativeGlassOpacity(not_null<QWidget*> widget, float64 opacity);
+#else
+[[nodiscard]] inline bool NativeGlassSupported() { return false; }
+[[nodiscard]] inline bool HasNativeGlass(const QWidget*) { return false; }
+inline void InitNativeGlassWithinWindow(not_null<QWidget*>) {}
+inline void SetNativeGlass(not_null<QWidget*>, QRect, int, const QColor&) {}
+inline void SetNativeGlassOpacity(not_null<QWidget*>, float64) {}
+#endif
 
 struct SystemTextReplaceResult {
 	int length = 0;

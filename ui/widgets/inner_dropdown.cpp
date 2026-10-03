@@ -29,6 +29,10 @@ InnerDropdown::InnerDropdown(
 
 	hide();
 
+	setProperty("_td_chromeOccluder", true);
+	setProperty("_td_chromeOccluderMargins", QVariant::fromValue(_st.padding));
+	setProperty("_td_chromeOccluderRadius", st::innerDropdownRadius);
+
 	shownValue(
 	) | rpl::filter([](bool shown) {
 		return shown;

@@ -256,6 +256,9 @@ void LayerStackWidget::BackgroundWidget::paintEvent(QPaintEvent *e) {
 		}
 	}
 	auto bgOpacity = _a_shown.value(isShown() ? 1. : 0.);
+	auto chromeDim = st::layerBg->c;
+	chromeDim.setAlphaF(chromeDim.alphaF() * bgOpacity);
+	setProperty("_td_chromeDim", chromeDim);
 	auto specialLayerOpacity = _a_specialLayerShown.value(_specialLayerShown ? 1. : 0.);
 	auto layerOpacity = _a_layerShown.value(_layerShown ? 1. : 0.);
 	if (bgOpacity == 0.) {
@@ -985,6 +988,8 @@ void LayerStackWidget::clearSpecialLayer() {
 }
 
 void LayerStackWidget::initChildLayer(LayerWidget *layer) {
+	layer->setProperty("_td_chromeOccluder", true);
+	layer->setProperty("_td_chromeOccluderRadius", st::boxRadius);
 	layer->setParent(this);
 	layer->setClosedCallback([=] { closeLayer(layer); });
 	layer->setResizedCallback([=] { updateLayerBoxes(); });

@@ -22,6 +22,8 @@ namespace {
 
 constexpr auto kDefaultWheelScrollLines = 3;
 
+int GlobalWidgetGrabDepth = 0;
+
 class WidgetCreator : public QWidget {
 public:
 	static void Create(not_null<QWidget*> widget) {
@@ -166,6 +168,11 @@ QPixmap GrabOpaque(not_null<QWidget*> target, QRect rect, QColor bg) {
 	return QPixmap::fromImage(std::move(result), Qt::ColorOnly);
 }
 
+// Used by the macOS native glass capture, declared there.
+int WidgetGrabDepth() {
+	return GlobalWidgetGrabDepth;
+}
+
 void RenderWidget(
 		QPainter &painter,
 		not_null<QWidget*> source,
@@ -173,7 +180,9 @@ void RenderWidget(
 		const QRegion &sourceRegion,
 		QWidget::RenderFlags renderFlags) {
 	const auto visible = source->isVisible();
+	++GlobalWidgetGrabDepth;
 	source->render(&painter, targetOffset, sourceRegion, renderFlags);
+	--GlobalWidgetGrabDepth;
 	if (!visible) {
 		MarkDirtyOpaqueChildrenRecursive(source);
 	}

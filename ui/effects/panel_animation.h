@@ -98,6 +98,10 @@ public:
 	void setFinalImage(QImage &&finalImage, QRect inner, int cornerRadius);
 	void setSkipShadow(bool skipShadow);
 
+	// The final image has no background of its own (it is shown over
+	// a native glass backdrop): no fade fills sampled from its edges.
+	void setTransparentContent(bool transparent);
+
 	void start();
 	[[nodiscard]] PaintState computeState(float64 dt, float64 opacity) const;
 	PaintState paintFrame(
@@ -133,6 +137,7 @@ private:
 
 	int _cornerRadius = 0;
 	bool _skipShadow = false;
+	bool _transparentContent = false;
 	int _startWidth = -1;
 	int _startHeight = -1;
 	int _startAlpha = 0;
