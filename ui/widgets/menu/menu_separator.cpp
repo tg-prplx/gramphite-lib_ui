@@ -7,6 +7,7 @@
 #include "ui/widgets/menu/menu_separator.h"
 
 #include "ui/painter.h"
+#include "ui/platform/ui_platform_utility.h"
 #include "styles/style_widgets.h"
 
 namespace Ui::Menu {
@@ -28,6 +29,9 @@ Separator::Separator(
 	paintRequest(
 	) | rpl::on_next([=] {
 		Painter p(this);
+		if (Platform::HasNativeGlass(this)) {
+			return;
+		}
 
 		p.fillRect(0, 0, width(), _height, _bg);
 		p.fillRect(

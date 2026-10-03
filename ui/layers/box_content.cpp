@@ -119,6 +119,7 @@ void BoxContent::setTitle(v::text::data title, Text::MarkedContext context) {
 QPointer<AbstractButton> BoxContent::addButton(
 		object_ptr<AbstractButton> button) {
 	auto result = QPointer<AbstractButton>(button.data());
+	++_buttonsAdded;
 	getDelegate()->addButton(std::move(button));
 	return result;
 }
@@ -142,12 +143,14 @@ QPointer<RoundButton> BoxContent::addButton(
 		rpl::producer<QString> text,
 		Fn<void()> clickCallback,
 		const style::RoundButton &st) {
+	const auto primary = !_buttonsAdded && (&st == &st::defaultBoxButton);
 	auto button = object_ptr<RoundButton>(
 		this,
 		std::move(text),
-		st);
+		primary ? st::defaultBoxPrimaryButton : st);
 	auto result = QPointer<RoundButton>(button.data());
 	result->setClickedCallback(std::move(clickCallback));
+	++_buttonsAdded;
 	getDelegate()->addButton(std::move(button));
 	return result;
 }

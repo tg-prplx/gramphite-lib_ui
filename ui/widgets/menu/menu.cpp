@@ -6,6 +6,8 @@
 //
 #include "ui/widgets/menu/menu.h"
 
+#include "ui/platform/ui_platform_utility.h"
+
 #include "ui/widgets/menu/menu_action.h"
 #include "ui/widgets/menu/menu_item_base.h"
 #include "ui/widgets/menu/menu_separator.h"
@@ -48,13 +50,15 @@ void Menu::init() {
 
 	setMouseTracking(true);
 
-	if (_st.itemBg->c.alpha() == 255) {
+	if (_st.itemBg->c.alpha() == 255 && !Platform::HasNativeGlass(this)) {
 		setAttribute(Qt::WA_OpaquePaintEvent);
 	}
 
 	paintRequest(
 	) | rpl::on_next([=](const QRect &clip) {
-		QPainter(this).fillRect(clip, _st.itemBg);
+		if (!Platform::HasNativeGlass(this)) {
+			QPainter(this).fillRect(clip, _st.itemBg);
+		}
 	}, lifetime());
 
 	positionValue(

@@ -160,6 +160,7 @@ public:
 		getDelegate()->setCustomCornersFilling(corners);
 	}
 	void clearButtons() {
+		_buttonsAdded = 0;
 		getDelegate()->clearButtons();
 	}
 	QPointer<AbstractButton> addButton(object_ptr<AbstractButton> button);
@@ -322,6 +323,7 @@ private:
 	BoxContentDelegate *_delegate = nullptr;
 
 	bool _preparing = false;
+	int _buttonsAdded = 0;
 	bool _noContentMargin = false;
 	bool _closeByEscape = true;
 	int _innerTopSkip = 0;

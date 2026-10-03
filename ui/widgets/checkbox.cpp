@@ -88,31 +88,44 @@ void ToggleView::paint(QPainter &p, int left, int top, int outerWidth) {
 	top += _st->border;
 
 	PainterHighQualityEnabler hq(p);
-	auto toggled = currentAnimationValue();
-	auto fullWidth = _st->diameter + _st->width;
-	auto innerDiameter = _st->diameter - 2 * _st->shift;
-	auto innerRadius = float64(innerDiameter) / 2.;
-	auto toggleLeft = left + anim::interpolate(0, fullWidth - _st->diameter, toggled);
-	auto bgRect = style::rtlrect(left + _st->shift, top + _st->shift, fullWidth - 2 * _st->shift, innerDiameter, outerWidth);
-	auto fgRect = style::rtlrect(toggleLeft, top, _st->diameter, _st->diameter, outerWidth);
-	auto fgBrush = anim::brush(_st->untoggledFg, _st->toggledFg, toggled);
+	const auto toggled = currentAnimationValue();
+	const auto fullWidth = _st->diameter + _st->width;
+	const auto radius = _st->diameter / 2.;
+	const auto knobDiameter = _st->diameter - 2 * _st->shift;
+	const auto toggleLeft = left
+		+ anim::interpolate(0, fullWidth - _st->diameter, toggled);
+	const auto bgRect = style::rtlrect(
+		left,
+		top,
+		fullWidth,
+		_st->diameter,
+		outerWidth);
+	const auto knobRect = style::rtlrect(
+		toggleLeft + _st->shift,
+		top + _st->shift,
+		knobDiameter,
+		knobDiameter,
+		outerWidth);
+	const auto fgBrush = anim::brush(_st->untoggledFg, _st->toggledFg, toggled);
 
 	p.setPen(Qt::NoPen);
 	p.setBrush(fgBrush);
-	p.drawRoundedRect(bgRect, innerRadius, innerRadius);
+	p.drawRoundedRect(bgRect, radius, radius);
 
-	auto pen = anim::pen(_st->untoggledFg, _st->toggledFg, toggled);
-	pen.setWidth(_st->border);
-	p.setPen(pen);
 	p.setBrush(anim::brush(_st->untoggledBg, _st->toggledBg, toggled));
-	p.drawEllipse(fgRect);
+	p.drawEllipse(knobRect);
 
 	if (_locked || _st->xsize > 0) {
 		p.setPen(Qt::NoPen);
 		p.setBrush(fgBrush);
 		if (_locked) {
 			const auto color = anim::color(_st->untoggledFg, _st->toggledFg, toggled);
-			_st->lockIcon.paint(p, toggleLeft, top, outerWidth, color);
+			_st->lockIcon.paint(
+				p,
+				toggleLeft + _st->shift,
+				top + _st->shift,
+				outerWidth,
+				color);
 		} else {
 			paintXV(p, toggleLeft, top, outerWidth, toggled, fgBrush);
 		}

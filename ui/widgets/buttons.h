@@ -348,6 +348,7 @@ protected:
 		StateChangeSource source) override;
 
 	void paintEvent(QPaintEvent *e) override;
+	QImage prepareRippleMask() const override;
 
 	void paintBg(Painter &p, const QRect &rect, bool over) const;
 	void paintText(Painter &p, bool over, int outerw) const;

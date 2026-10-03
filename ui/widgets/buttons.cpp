@@ -13,6 +13,7 @@
 #include "ui/text/text_utilities.h"
 #include "ui/widgets/checkbox.h"
 #include "ui/painter.h"
+#include "ui/platform/ui_platform_utility.h"
 #include "ui/rect.h"
 #include "ui/qt_object_factory.h"
 #include "ui/round_rect.h"
@@ -175,7 +176,12 @@ void RippleButton::paintRipple(
 
 void RippleButton::paintRipple(QPainter &p, int x, int y, const QColor *colorOverride) {
 	if (_ripple) {
+		const auto opacity = p.opacity();
+		if (Platform::HasNativeGlass(this)) {
+			p.setOpacity(opacity * 0.35);
+		}
 		_ripple->paint(p, x, y, width(), colorOverride);
+		p.setOpacity(opacity);
 		if (_ripple->empty()) {
 			_ripple.reset();
 		}
@@ -991,7 +997,27 @@ void SettingsButton::paintEvent(QPaintEvent *e) {
 }
 
 void SettingsButton::paintBg(Painter &p, const QRect &rect, bool over) const {
-	p.fillRect(rect, over ? _st.textBgOver : _st.textBg);
+	p.fillRect(rect, _st.textBg);
+	if (over) {
+		const auto radius = st::settingsRowSelectRadius;
+		PainterHighQualityEnabler hq(p);
+		p.setPen(Qt::NoPen);
+		p.setBrush(_st.textBgOver);
+		p.drawRoundedRect(
+			this->rect().marginsRemoved(st::settingsRowSelectMargin),
+			radius,
+			radius);
+	}
+}
+
+QImage SettingsButton::prepareRippleMask() const {
+	const auto radius = st::settingsRowSelectRadius;
+	return RippleAnimation::MaskByDrawer(size(), false, [&](QPainter &p) {
+		p.drawRoundedRect(
+			rect().marginsRemoved(st::settingsRowSelectMargin),
+			radius,
+			radius);
+	});
 }
 
 void SettingsButton::paintText(Painter &p, bool over, int outerw) const {

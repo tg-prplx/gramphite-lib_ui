@@ -6,6 +6,8 @@
 //
 #include "ui/widgets/side_bar_button.h"
 
+#include "ui/platform/ui_platform_utility.h"
+
 #include "ui/effects/ripple_animation.h"
 #include "ui/painter.h"
 #include "styles/style_widgets.h"
@@ -18,6 +20,7 @@ namespace {
 
 constexpr auto kMaxLabelLines = 3;
 constexpr auto kPremiumLockedOpacity = 0.6;
+constexpr auto kGlassActiveOpacity = 0.5;
 
 } // namespace
 
@@ -38,7 +41,7 @@ SideBarButton::SideBarButton(
 		title,
 		kMarkupTextOptions,
 		_context);
-	setAttribute(Qt::WA_OpaquePaintEvent);
+	setAttribute(Qt::WA_OpaquePaintEvent, !Platform::HasNativeGlass(this));
 
 	style::PaletteChanged(
 	) | rpl::on_next([this] {
@@ -167,7 +170,25 @@ void SideBarButton::paintEvent(QPaintEvent *e) {
 	const auto clip = e->rect();
 
 	const auto &bg = _active ? _st.textBgActive : _st.textBg;
-	p.fillRect(clip, bg);
+	if (!Platform::HasNativeGlass(this)) {
+		p.fillRect(clip, _st.textBg);
+	}
+	if (_active) {
+		const auto radius = st::sideBarButtonActiveRadius;
+		auto hq = PainterHighQualityEnabler(p);
+		p.setPen(Qt::NoPen);
+		if (Platform::HasNativeGlass(this)) {
+			auto color = _st.textBgActive->c;
+			color.setAlphaF(color.alphaF() * kGlassActiveOpacity);
+			p.setBrush(color);
+		} else {
+			p.setBrush(_st.textBgActive);
+		}
+		p.drawRoundedRect(
+			rect().marginsRemoved(st::sideBarButtonActiveMargin),
+			radius,
+			radius);
+	}
 
 	RippleButton::paintRipple(p, 0, 0);
 
@@ -248,6 +269,16 @@ void SideBarButton::paintEvent(QPaintEvent *e) {
 		}
 		p.drawImage(0, 0, icon);
 	}
+}
+
+QImage SideBarButton::prepareRippleMask() const {
+	const auto radius = st::sideBarButtonActiveRadius;
+	return RippleAnimation::MaskByDrawer(size(), false, [&](QPainter &p) {
+		p.drawRoundedRect(
+			rect().marginsRemoved(st::sideBarButtonActiveMargin),
+			radius,
+			radius);
+	});
 }
 
 const style::icon &SideBarButton::computeIcon() const {

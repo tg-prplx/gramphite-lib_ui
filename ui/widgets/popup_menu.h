@@ -149,6 +149,7 @@ protected:
 	void paintEvent(QPaintEvent *e) override;
 	void focusOutEvent(QFocusEvent *e) override;
 	void hideEvent(QHideEvent *e) override;
+	void showEvent(QShowEvent *e) override;
 	void keyPressEvent(QKeyEvent *e) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
 	void mousePressEvent(QMouseEvent *e) override;

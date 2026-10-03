@@ -71,13 +71,21 @@ void RoundShadowAnimation::setCornerMask(Corner &corner, const QImage &image) {
 }
 
 void RoundShadowAnimation::paintCorner(Corner &corner, int left, int top) {
-	auto mask = corner.bytes;
+	const auto area = QRect(left, top, corner.width, corner.height)
+		.intersected(_frame.rect());
+	if (area.isEmpty()) {
+		return;
+	}
+	auto mask = corner.bytes
+		+ (area.y() - top) * corner.image.bytesPerLine()
+		+ (area.x() - left) * corner.bytesPerPixel;
 	auto bytesPerPixel = corner.bytesPerPixel;
-	auto bytesPerLineAdded = corner.bytesPerLineAdded;
-	auto frameInts = _frameInts + top * _frameIntsPerLine + left;
-	auto frameIntsPerLineAdd = _frameIntsPerLine - corner.width;
-	for (auto y = 0; y != corner.height; ++y) {
-		for (auto x = 0; x != corner.width; ++x) {
+	auto bytesPerLineAdded = corner.image.bytesPerLine()
+		- area.width() * bytesPerPixel;
+	auto frameInts = _frameInts + area.y() * _frameIntsPerLine + area.x();
+	auto frameIntsPerLineAdd = _frameIntsPerLine - area.width();
+	for (auto y = 0; y != area.height(); ++y) {
+		for (auto x = 0; x != area.width(); ++x) {
 			auto alpha = static_cast<uint32>(*mask) + 1;
 			*frameInts = anim::unshifted(anim::shifted(*frameInts) * alpha);
 			++frameInts;
@@ -217,7 +225,6 @@ void PanelAnimation::setFinalImage(
 	if (!_skipShadow) {
 		setShadow(_st.shadow, _cornerRadius);
 	}
-
 	auto checkCorner = [this, inner](Corner &corner) {
 		if (!corner.valid()) return;
 		if ((_startWidth >= 0 && _startWidth < _finalWidth)
@@ -313,6 +320,23 @@ void PanelAnimation::setAlphaDuration() {
 void PanelAnimation::start() {
 	Assert(!_finalImage.isNull());
 	RoundShadowAnimation::start(_finalWidth, _finalHeight, _finalImage.devicePixelRatio());
+	// Large radii must also fit the first frame of short menus.
+	const auto minimumWidth = std::max({
+		_topLeft.width,
+		_topRight.width,
+		_bottomLeft.width,
+		_bottomRight.width });
+	const auto minimumHeight = std::max({
+		_topLeft.height,
+		_topRight.height,
+		_bottomLeft.height,
+		_bottomRight.height });
+	if (_startWidth >= 0) {
+		_startWidth = std::max(_startWidth, minimumWidth);
+	}
+	if (_startHeight >= 0) {
+		_startHeight = std::max(_startHeight, minimumHeight);
+	}
 	auto checkCorner = [this](const Corner &corner) {
 		if (!corner.valid()) return;
 		if (_startWidth >= 0) Assert(corner.width <= _startWidth);
@@ -451,6 +475,12 @@ auto PanelAnimation::paintFrame(
 	}
 
 	if (opacity == 1.) {
+		// A styled shadow may extend beyond the padding in the captured image.
+		// Clear only allocated pixels; the shadow painter clips its tiles too.
+		outerLeft = std::max(outerLeft, 0);
+		outerTop = std::max(outerTop, 0);
+		outerRight = std::min(outerRight, _frameWidth);
+		outerBottom = std::min(outerBottom, _frameHeight);
 		// Fill above the frame top with transparent.
 		auto fillTopInts = (_frameInts + outerTop * _frameIntsPerLine + outerLeft);
 		auto fillWidth = (outerRight - outerLeft) * sizeof(uint32);

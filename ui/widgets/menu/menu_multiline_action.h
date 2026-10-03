@@ -50,6 +50,7 @@ public:
 private:
 	int contentHeight() const override;
 	void paintEvent(QPaintEvent *e) override;
+	QImage prepareRippleMask() const override;
 	void updateMinWidth();
 
 	const style::Menu &_st;

@@ -50,6 +50,7 @@ public:
 
 private:
 	void paintEvent(QPaintEvent *e) override;
+	QImage prepareRippleMask() const override;
 
 	[[nodiscard]] const style::icon &computeIcon() const;
 	[[nodiscard]] int iconLeft() const;

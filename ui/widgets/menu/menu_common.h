@@ -6,6 +6,10 @@
 //
 #pragma once
 
+namespace style {
+struct Menu;
+} // namespace style
+
 namespace Ui::Menu {
 
 enum class TriggeredSource {
@@ -26,5 +30,12 @@ not_null<QAction*> CreateAction(
 	QWidget *parent,
 	const QString &text,
 	Fn<void()> &&callback);
+
+void PaintItemBackground(
+	QPainter &p,
+	const style::Menu &st,
+	QRect rect,
+	bool selected);
+[[nodiscard]] QImage PrepareItemRippleMask(QSize size);
 
 } // namespace Ui::Menu

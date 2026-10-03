@@ -333,7 +333,12 @@ struct Metrics {
 	auto font = QFont(QFont().family());
 
 	const auto monospace = (flags & FontFlag::Monospace) != 0;
+#ifdef Q_OS_MAC
+	const auto system = !monospace
+		&& (family.isEmpty() || family == SystemFontTag());
+#else // Q_OS_MAC
 	const auto system = !monospace && (family == SystemFontTag());
+#endif // Q_OS_MAC
 	const auto overriden = !monospace && !system && !family.isEmpty();
 	if (monospace) {
 		font.setFamily(MonospaceFont());

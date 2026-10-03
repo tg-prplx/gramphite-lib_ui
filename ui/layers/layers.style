@@ -35,17 +35,38 @@ Box {
 }
 
 boxDuration: 200;
-boxRadius: 8px;
+boxRadius: 20px;
 
 boxButtonFont: font(boxFontSize semibold);
 defaultBoxButtonTextStyle: TextStyle(semiboldTextStyle) {
 	font: font(14px semibold);
 }
 defaultBoxButton: RoundButton(defaultLightButton) {
-	width: -30px;
+	textFg: boxButtonFg;
+	textFgOver: boxButtonFg;
+	numbersTextFg: boxButtonFg;
+	numbersTextFgOver: boxButtonFg;
+	textBg: boxButtonBg;
+	textBgOver: boxButtonBgOver;
+	width: -36px;
 	height: 34px;
+	radius: 11px;
 	textTop: 7px;
 	style: defaultBoxButtonTextStyle;
+	ripple: RippleAnimation(defaultRippleAnimation) {
+		color: boxButtonBgRipple;
+	}
+}
+defaultBoxPrimaryButton: RoundButton(defaultBoxButton) {
+	textFg: boxButtonPrimaryFg;
+	textFgOver: boxButtonPrimaryFg;
+	numbersTextFg: boxButtonPrimaryFg;
+	numbersTextFgOver: boxButtonPrimaryFg;
+	textBg: boxButtonPrimaryBg;
+	textBgOver: boxButtonPrimaryBgOver;
+	ripple: RippleAnimation(defaultRippleAnimation) {
+		color: boxButtonPrimaryBgRipple;
+	}
 }
 
 boxLabelStyle: TextStyle(boxTextStyle) {
@@ -70,7 +91,7 @@ defaultBoxCheckbox: Checkbox(defaultCheckbox) {
 
 boxRoundShadow: roundShadowRadius8px;
 
-boxTitleFont: font(16px semibold);
+boxTitleFont: font(17px semibold);
 boxTitle: FlatLabel(defaultFlatLabel) {
 	textFg: boxTitleFg;
 	maxHeight: 24px;
@@ -78,8 +99,8 @@ boxTitle: FlatLabel(defaultFlatLabel) {
 		font: boxTitleFont;
 	}
 }
-boxTitlePosition: point(24px, 13px);
-boxTitleHeight: 48px;
+boxTitlePosition: point(24px, 14px);
+boxTitleHeight: 52px;
 boxTitleAdditionalSkip: 9px;
 boxTitleAdditionalFont: normalFont;
 boxScroll: defaultSolidScroll;
@@ -97,7 +118,7 @@ boxTitleClose: IconButton(defaultIconButton) {
 	icon: boxTitleCloseIcon;
 	iconOver: boxTitleCloseIconOver;
 
-	rippleAreaPosition: point(4px, 4px);
+	rippleAreaPosition: point(6px, 6px);
 	rippleAreaSize: 40px;
 	ripple: defaultRippleAnimationBgOver;
 }
@@ -122,7 +143,7 @@ boxLittleSkip: 10px;
 boxMediumSkip: 20px;
 
 defaultBox: Box {
-	buttonPadding: margins(6px, 10px, 10px, 10px);
+	buttonPadding: margins(10px, 16px, 20px, 20px);
 	buttonHeight: 34px;
 	button: defaultBoxButton;
 	margin: margins(0px, 10px, 0px, 10px);

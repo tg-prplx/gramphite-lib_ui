@@ -21,6 +21,7 @@
 #include "ui/screen_reader_mode.h"
 #include "base/timer.h"
 #include "ui/ui_utility.h"
+#include "styles/palette.h"
 
 #include <QtGui/QtEvents>
 #include <QtGui/QPainter>
@@ -109,6 +110,9 @@ void PopupMenu::init() {
 		hideMenu(true);
 	}, lifetime());
 
+	setProperty("_td_nativeGlass", Platform::NativeGlassSupported());
+	_menu->setAttribute(Qt::WA_OpaquePaintEvent,
+		_st.menu.itemBg->c.alpha() == 255 && !Platform::HasNativeGlass(this));
 	_touchBeginCounter = Integration::Instance().touchCounterNow();
 
 	installEventFilter(this);
@@ -225,9 +229,18 @@ void PopupMenu::updateRoundingOverlay() {
 		auto hq = PainterHighQualityEnabler(p);
 		p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
 		_roundRect.paint(p, _inner, RectPart::AllCorners);
-		if (!_grabbingForPanelAnimation) {
+		if (!_grabbingForPanelAnimation && !Platform::HasNativeGlass(this)) {
 			p.setCompositionMode(QPainter::CompositionMode_SourceOver);
 			_boxShadow.paint(p, _inner, _st.radius);
+			auto pen = QPen(st::menuBorderFg);
+			pen.setWidthF(1.);
+			p.setPen(pen);
+			p.setBrush(Qt::NoBrush);
+			const auto half = 0.5;
+			p.drawRoundedRect(
+				QRectF(_inner).marginsRemoved({ half, half, half, half }),
+				_st.radius - half,
+				_st.radius - half);
 		}
 	}, _roundingOverlay->lifetime());
 
@@ -255,6 +268,9 @@ void PopupMenu::handleMenuResize() {
 		resize(newSize);
 	}
 	_inner = rect().marginsRemoved(_padding);
+	if (isVisible() && Platform::HasNativeGlass(this)) {
+		Platform::SetNativeGlass(this, _inner, _st.radius, _st.menu.itemBg->c);
+	}
 }
 
 not_null<QAction*> PopupMenu::addAction(
@@ -339,7 +355,12 @@ bool PopupMenu::empty() const {
 }
 
 void PopupMenu::paintEvent(QPaintEvent *e) {
+	if (Platform::HasNativeGlass(this)) {
+		Platform::SetNativeGlass(this, _inner, _st.radius, _st.menu.itemBg->c);
+	}
 	QPainter p(this);
+	Platform::SetNativeGlassOpacity(this,
+		_a_opacity.value(_hiding ? 0. : 1.));
 
 	if (_a_show.animating()) {
 		const auto opacity = _a_opacity.value(_hiding ? 0. : 1.);
@@ -620,6 +641,13 @@ void PopupMenu::focusOutEvent(QFocusEvent *e) {
 	}
 }
 
+void PopupMenu::showEvent(QShowEvent *e) {
+	RpWidget::showEvent(e);
+	if (Platform::HasNativeGlass(this)) {
+		Platform::SetNativeGlass(this, _inner, _st.radius, _st.menu.itemBg->c);
+	}
+}
+
 void PopupMenu::hideEvent(QHideEvent *e) {
 	if (_deleteOnHide) {
 		if (_triggering) {
@@ -836,8 +864,10 @@ void PopupMenu::startShowAnimation() {
 
 		const auto pixelRatio = style::DevicePixelRatio();
 		_showAnimation = std::make_unique<PanelAnimation>(_st.animation, _origin);
+		_showAnimation->setSkipShadow(Platform::HasNativeGlass(this));
+		_showAnimation->setTransparentContent(Platform::HasNativeGlass(this));
 		_showAnimation->setFinalImage(std::move(cache), QRect(_inner.topLeft() * pixelRatio, _inner.size() * pixelRatio), _st.radius);
-		if (_useTransparency) {
+		if (_useTransparency && !Platform::HasNativeGlass(this)) {
 			_showAnimation->setCornerMasks(Images::CornersMask(_st.radius));
 		} else {
 			_showAnimation->setSkipShadow(true);
@@ -889,7 +919,9 @@ QImage PopupMenu::grabForPanelAnimation() {
 	{
 		QPainter p(&result);
 		_grabbingForPanelAnimation = true;
-		p.fillRect(_inner, _st.menu.itemBg);
+		if (!Platform::HasNativeGlass(this)) {
+			p.fillRect(_inner, _st.menu.itemBg);
+		}
 		for (const auto child : children()) {
 			if (const auto widget = qobject_cast<QWidget*>(child)) {
 				// Submenus are windows of their own, they are not a part
@@ -1195,6 +1227,9 @@ void PopupMenu::setupMenuWidget() {
 			paddingWrap->height() - _st.scrollPadding.bottom(),
 			paddingWrap->width(),
 			_st.scrollPadding.bottom()));
+		if (Platform::HasNativeGlass(this)) {
+			return;
+		}
 		auto p = QPainter(paddingWrap);
 		if (!top.isEmpty()) {
 			p.fillRect(top, _st.menu.itemBg);
